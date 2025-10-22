@@ -43,6 +43,14 @@ pipeline:
                       type: branch
                       spec:
                         branch: main
+              - step:
+                  type: Test
+                  name: Test_1
+                  identifier: Test_1
+                  spec:
+                    shell: Sh
+                    command: ls
+                    intelligenceMode: true
         delegateSelectors:
           - docker-delegate
         when:
