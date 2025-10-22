@@ -1,0 +1,47 @@
+pipeline:
+  name: rag-2
+  identifier: rag2
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.Github_OAuth_1761129192082
+        repoName: rag-application-CI Public
+        build: <+input>
+  stages:
+    - stage:
+        name: build
+        identifier: build
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          buildIntelligence:
+            enabled: true
+          infrastructure:
+            type: VM
+            spec:
+              type: Pool
+              spec:
+                poolName: ubuntu-gcp
+                os: Linux
+          execution:
+            steps:
+              - step:
+                  type: GitClone
+                  name: GitClone_1
+                  identifier: GitClone_1
+                  spec:
+                    connectorRef: account.Github_OAuth_1761129192082
+                    repoName: rag-application-CI Public
+                    build:
+                      type: branch
+                      spec:
+                        branch: main
+        delegateSelectors:
+          - docker-delegate
