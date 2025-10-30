@@ -10,31 +10,34 @@ jobs:
     runs-on: linux-label
 
     steps:
+      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Initialization
+
+      # Step 2: Set up Python virtual environment and install dependencies
+      - name: Setup Python Virtual Environment
         run: |
           python3 -m venv env
           source env/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          pip install bandit safety pytest  # make sure tools are available in env
 
-#      - name: Set up Python
-#        uses: actions/setup-python@v5
-#        with:
-#          python-version: '3.12'
-
-      - name: Install dependencies
+      # Step 3: Run tests inside the virtual environment
+      - name: Run Tests
         run: |
-          python3 -m pip install --upgrade pip
-          pip install -r requirements.txt
+          source env/bin/activate
+          pytest -v --maxfail=1 --disable-warnings
 
-      - name: Run tests
-        run: pytest -v --maxfail=1 --disable-warnings
+      # Step 4: Run security scan with Bandit
+      - name: Run Bandit (Security Scan)
+        run: |
+          source env/bin/activate
+          bandit -r app/ -ll
 
-      - name: Run Bandit (security scan)
-        run: bandit -r app/ -ll
-
-      - name: Scan dependencies with Safety
-        run: safety check --full-report
+      # Step 5: Scan dependencies with Safety
+      - name: Scan Dependencies with Safety
+        run: |
+          source env/bin/activate
+          safety check --full-report
 
