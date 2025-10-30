@@ -7,11 +7,11 @@ on:
 
 jobs:
   build-test-scan:
-    runs-on: linux-label
+    runs-on: linux-label   # Replace with your self-hosted runner label
 
     steps:
       # Step 1: Checkout the code
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       # Step 2: Set up Python virtual environment and install dependencies
@@ -21,23 +21,27 @@ jobs:
           source env/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install bandit safety pytest  # make sure tools are available in env
+          # Install tools for testing & scanning
+          pip install pytest bandit safety
 
-      # Step 3: Run tests inside the virtual environment
+      # Step 3: Run Tests
       - name: Run Tests
         run: |
           source env/bin/activate
+          export PYTHONPATH=$PWD   # Ensure Python finds your 'app' module
           pytest -v --maxfail=1 --disable-warnings
 
-      # Step 4: Run security scan with Bandit
+      # Step 4: Run Bandit Security Scan
       - name: Run Bandit (Security Scan)
         run: |
           source env/bin/activate
+          export PYTHONPATH=$PWD
           bandit -r app/ -ll
 
       # Step 5: Scan dependencies with Safety
       - name: Scan Dependencies with Safety
         run: |
           source env/bin/activate
+          export PYTHONPATH=$PWD
           safety check --full-report
 
