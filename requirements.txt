@@ -5,3 +5,4 @@ langchain_pinecone
 cohere==5.15.0
 streamlit
 python-dotenv
+setuptools>=78.1.1
