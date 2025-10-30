@@ -6,22 +6,22 @@ on:
 
 jobs:
   deploy:
-    runs-on: linux-label  # or ubuntu-latest if deploying via SSH from GH
+    runs-on: linux-label   # your self-hosted runner label
 
     steps:
-      - name: Checkout code
+      # Step 1: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-#      - name: Set up Python
-#        uses: actions/setup-python@v5
-#        with:
-#          python-version: '3.12'
-
-      - name: Install dependencies
+      # Step 2: Ensure Python 3 is available and use venv to avoid system conflicts
+      - name: Setup Python Virtual Environment
         run: |
-          python -m pip install --upgrade pip
+          python3 -m venv env
+          source env/bin/activate
+          pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Step 3: Deploy to GCP L4 Instance
       - name: Deploy to GCP L4 Instance
         env:
           GCP_HOST: ${{ secrets.GCP_HOST }}
@@ -30,12 +30,36 @@ jobs:
         run: |
           echo "$GCP_SSH_KEY" > gcp_key.pem
           chmod 600 gcp_key.pem
+
+          # Optional: verify connectivity before deploy
+          ssh -i gcp_key.pem -o StrictHostKeyChecking=no ${GCP_USER}@${GCP_HOST} "echo '✅ Connected to GCP host: $(hostname)'"
+
+          # Deploy code remotely
           ssh -i gcp_key.pem -o StrictHostKeyChecking=no ${GCP_USER}@${GCP_HOST} << 'EOF'
+            set -e
+
+            echo "---- Pulling latest code ----"
             cd /opt/rag-app
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "---- Setting up Python environment ----"
             python3 -m venv venv
             source venv/bin/activate
+            pip install --upgrade pip
             pip install -r requirements.txt
+
+            echo "---- Restarting RAG application ----"
+            # Kill existing process if running
+            pkill -f "python app/main.py" || true
+
+            # Run the app in background with nohup
             nohup python app/main.py > app.log 2>&1 &
+            echo "✅ Deployment completed successfully"
           EOF
+
+      # Step 4: Clean up SSH key
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f gcp_key.pem
 
