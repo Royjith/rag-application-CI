@@ -1,0 +1,41 @@
+name: CD - Deploy to GCP L4
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # or ubuntu-latest if deploying via SSH from GH
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Deploy to GCP L4 Instance
+        env:
+          GCP_HOST: ${{ secrets.GCP_HOST }}
+          GCP_USER: ${{ secrets.GCP_USER }}
+          GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+        run: |
+          echo "$GCP_SSH_KEY" > gcp_key.pem
+          chmod 600 gcp_key.pem
+          ssh -i gcp_key.pem -o StrictHostKeyChecking=no ${GCP_USER}@${GCP_HOST} << 'EOF'
+            cd /opt/rag-app
+            git pull origin main
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+            nohup python app/main.py > app.log 2>&1 &
+          EOF
+
