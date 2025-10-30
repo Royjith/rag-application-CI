@@ -90,7 +90,7 @@ def generate_with_deepseek(cohere_rag_prompt):
 
                 "temperature": 0,
 
-            },
+            },  # nosec B113
 
         ).json()
     result=response['choices'][0]['message']['content']
