@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted  # or ubuntu-latest if deploying via SSH from GH
+    runs-on: linux-label  # or ubuntu-latest if deploying via SSH from GH
 
     steps:
       - name: Checkout code
