@@ -26,7 +26,7 @@ jobs:
         env:
           GCP_HOST: ${{ secrets.GCP_HOST }}
           GCP_USER: ${{ secrets.GCP_USER }}
-          GCP_SSH_KEY: ${{ RAG_SECRET }}
+          GCP_SSH_KEY: ${{ secrets.RAG_SECRET }}
         run: |
           echo "$GCP_SSH_KEY" > gcp_key.pem
           chmod 600 gcp_key.pem
