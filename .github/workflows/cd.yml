@@ -1,65 +1,62 @@
-name: CD - Deploy to GCP L4
+name: CD - Deploy Streamlit App
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["CI - Build, Test, and Scan"]   # 👈 Replace with the exact name: from your ci.yml "name:" field
+    types:
+      - completed
 
 jobs:
   deploy:
-    runs-on: linux-label   # your self-hosted runner label
+    name: Deploy Streamlit App
+    runs-on: ubuntu-latest
+
+    # Only run when CI succeeds
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    env:
+      COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      PINECONE_API_KEY: ${{ secrets.PINCONE_API_KEY }}
 
     steps:
-      # Step 1: Checkout repository
-      - name: Checkout Code
+      - name: Checkout source code
         uses: actions/checkout@v4
 
-      # Step 2: Ensure Python 3 is available and use venv to avoid system conflicts
-      - name: Setup Python Virtual Environment
-        run: |
-          python3 -m venv env
-          source env/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # Step 3: Deploy to GCP L4 Instance
-      - name: Deploy to GCP L4 Instance
-        env:
-          GCP_HOST: ${{ secrets.GCP_HOST }}
-          GCP_USER: ${{ secrets.GCP_USER }}
-          GCP_SSH_KEY: ${{ secrets.RAG_SECRET }}
-        run: |
-          echo "$GCP_SSH_KEY" > gcp_key.pem
-          chmod 600 gcp_key.pem
-
-          # Optional: verify connectivity before deploy
-          ssh -i gcp_key.pem -o StrictHostKeyChecking=no ${GCP_USER}@${GCP_HOST} "echo '✅ Connected to GCP host: $(hostname)'"
-
-          # Deploy code remotely
-          ssh -i gcp_key.pem -o StrictHostKeyChecking=no ${GCP_USER}@${GCP_HOST} << 'EOF'
+      - name: Deploy to GCP VM
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.GCP_HOST }}
+          username: ${{ secrets.GCP_USER }}
+          key: ${{ secrets.GCP_SSH_KEY }}
+          envs: COHERE_API_KEY,PINECONE_API_KEY
+          script: |
             set -e
 
-            echo "---- Pulling latest code ----"
-            cd /opt/rag-app
-            git fetch origin main
-            git reset --hard origin/main
+            echo "Stopping existing Streamlit app..."
+            sudo fuser -k 8501/tcp || true
 
-            echo "---- Setting up Python environment ----"
-            python3 -m venv venv
-            source venv/bin/activate
+            echo "Installing dependencies..."
+            sudo apt install -y python3 python3-venv python3-pip git curl
+
+            echo "Removing old app..."
+            rm -rf rag-application
+
+            echo "Cloning latest repo..."
+            git clone https://github.com/pidcai/rag-application.git
+            cd rag-application
+
+            echo "Setting up Python virtual environment..."
+            python3 -m venv env
+            source env/bin/activate
+
+            echo "Installing requirements..."
             pip install --upgrade pip
             pip install -r requirements.txt
 
-            echo "---- Restarting RAG application ----"
-            # Kill existing process if running
-            pkill -f "python app/main.py" || true
+            echo "Launching Streamlit app..."
+            nohup bash -c 'COHERE_API_KEY="${{ secrets.COHERE_API_KEY }}" \
+            PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
+            streamlit run streamlit_ui.py > streamlit.log 2>&1 &'
 
-            # Run the app in background with nohup
-            nohup python app/main.py > app.log 2>&1 &
-            echo "✅ Deployment completed successfully"
-          EOF
-
-      # Step 4: Clean up SSH key
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f gcp_key.pem
+            echo "Deployment triggered successfully!"
 
