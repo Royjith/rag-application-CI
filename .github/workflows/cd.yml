@@ -40,7 +40,7 @@ jobs:
 
             echo "Cloning latest repo..."
             git clone https://github.com/Royjith/rag-application-CI.git
-            cd rag-application
+            cd rag-application-CI
 
             echo "Setting up Python virtual environment..."
             python3 -m venv env
