@@ -39,7 +39,7 @@ jobs:
             rm -rf rag-application
 
             echo "Cloning latest repo..."
-            git clone https://github.com/pidcai/rag-application.git
+            git clone https://github.com/Royjith/rag-application-CI.git
             cd rag-application
 
             echo "Setting up Python virtual environment..."
