@@ -50,10 +50,12 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt
 
+            echo "change directory"
+            cd app
+
             echo "Launching Streamlit app..."
             nohup bash -c 'COHERE_API_KEY="${{ secrets.COHERE_API_KEY }}" \
             PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
             streamlit run streamlit_ui.py > streamlit.log 2>&1 &'
 
             echo "✅ Streamlit deployment triggered!"
-
