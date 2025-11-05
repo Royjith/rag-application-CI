@@ -56,7 +56,7 @@ jobs:
 
             echo "Launching Streamlit app..."
             nohup bash -c 'COHERE_API_KEY="${{ secrets.COHERE_API_KEY }}" \
-            PINECONE_API_KEY="pcsk_4QZAB5_PNX1UNkhJKkxWeGBMLz6r2nzQGi9UV3QThXvSq8R6awXhUUJoZLSVqDjBHVNN3D" \
+            PINECONE_API_KEY="${{ secrets.PINCONE_API_KEY }}" \
             streamlit run streamlit_ui.py > streamlit.log 2>&1 &'
 
             echo "✅ Streamlit deployment triggered!"
