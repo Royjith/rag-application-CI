@@ -2,12 +2,12 @@ name: CI - Build, Test, and Scan
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: main
   pull_request:
 
 jobs:
   build-test-scan:
-    runs-on: linux-label   # Replace with your self-hosted runner label
+    runs-on: linux-runner   # Replace with your self-hosted runner label
 
     steps:
       # Step 1: Checkout the code
