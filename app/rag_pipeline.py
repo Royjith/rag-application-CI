@@ -20,7 +20,7 @@ proxies = {
     "http": None,
     "https": None,
 }
-VLLM_API_URL = "http://localhost:8000/v1/chat/completions"
+VLLM_API_URL = "http://35.244.0.143:8000/v1/chat/completions"
 
 # function to initialize the pinecone database as a vector store for RAG pipeline
 @st.cache_resource
@@ -82,7 +82,7 @@ def generate_with_deepseek(cohere_rag_prompt):
 
             json={
 
-                "model": "deepseek-ai/DeepSeek-R1-Distill-Llama-8B",
+                "model": "meta-llama/Llama-3.2-3B-Instruct",
 
                 "messages": cohere_rag_prompt,
 
@@ -94,6 +94,6 @@ def generate_with_deepseek(cohere_rag_prompt):
 
         ).json()
     result=response['choices'][0]['message']['content']
-    result=result.split('</think>')
-    return result[1]
+    #result=result.split('</think>')
+    return result#[1]
     
