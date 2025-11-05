@@ -1,6 +1,6 @@
 pinecone 
 langchain_cohere
-langchain_community==0.3.11 
+langchain_community==0.3.8 
 langchain_pinecone
 tokenizers==0.20.3 
 cohere==5.12.0
