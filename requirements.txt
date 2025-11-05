@@ -1,8 +1,10 @@
-pinecone==7.3.0 
-langchain_cohere==0.4.5
-langchain_community==0.3.31 
-langchain_pinecone==0.2.12
+pinecone 
+
+langchain_cohere
+langchain_community 
+langchain_pinecone 
 cohere==5.15.0
-streamlit==1.50.0
-python-dotenv==1.2.1
- 
+streamlit
+python-dotenv
+setuptools>=78.1.1
+  
