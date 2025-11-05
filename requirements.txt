@@ -1,10 +1,9 @@
 pinecone 
-
 langchain_cohere
 langchain_community 
 langchain_pinecone 
-cohere==5.15.0
+cohere
 streamlit
 python-dotenv
-setuptools>=78.1.1
+setuptools
   
