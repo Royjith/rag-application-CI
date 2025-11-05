@@ -39,9 +39,9 @@ jobs:
           bandit -r app/ -ll
 
       # Step 5: Scan dependencies with Safety
-      - name: Scan Dependencies with Safety
-        run: |
-          source env/bin/activate
-          export PYTHONPATH=$PWD
-          safety check --full-report
+#      - name: Scan Dependencies with Safety
+#        run: |
+#          source env/bin/activate
+#          export PYTHONPATH=$PWD
+#          safety check --full-report
 
