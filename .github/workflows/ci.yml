@@ -2,7 +2,7 @@ name: CI - Build, Test, and Scan
 
 on:
   push:
-    branches: main
+    branches: [ main ]
   pull_request:
 
 jobs:
@@ -22,13 +22,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           # Install tools for testing & scanning
-          pip install pytest bandit safety
+          pip install pytest bandit safety owasp-dep-scan
 
       # Step 3: Run Tests
 #      - name: Run Tests
 #        run: |
 #          source env/bin/activate
-#          export PYTHONPATH=$PWD   # Ensure Python finds your 'app' module
+#          export PYTHONPATH=$PWD
 #          pytest -v --maxfail=1 --disable-warnings
 
       # Step 4: Run Bandit Security Scan
@@ -44,4 +44,19 @@ jobs:
           source env/bin/activate
           export PYTHONPATH=$PWD
           safety check --full-report
+
+      # Step 6: OWASP dep-scan - Dependency Vulnerability Scan
+      - name: Run OWASP dep-scan
+        run: |
+          source env/bin/activate
+          export PYTHONPATH=$PWD
+          dep-scan --file requirements.txt --report_file dep-scan-report.json --report_format json
+          # Optional: also generate SARIF report for GitHub Security tab
+          dep-scan --file requirements.txt --report_file dep-scan-report.sarif --report_format sarif
+
+      # Step 7 (optional): Upload SARIF results to GitHub Security tab
+      - name: Upload OWASP dep-scan results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: dep-scan-report.sarif
 
