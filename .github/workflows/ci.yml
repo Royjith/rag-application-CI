@@ -22,14 +22,15 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           # Install tools for testing & scanning
-          pip install pytest bandit owasp-depscan snyk
+          pip install pytest bandit owasp-depscan
 
-      # Step 3: Run Tests (optional)
-#      - name: Run Tests
-#        run: |
-#          source env/bin/activate
-#          export PYTHONPATH=$PWD
-#          pytest -v --maxfail=1 --disable-warnings
+      # Step 3: Install Snyk CLI (no pip, no Docker)
+      - name: Install Snyk CLI
+        run: |
+          curl -fsSL https://static.snyk.io/cli/latest/snyk-linux -o snyk
+          chmod +x snyk
+          sudo mv snyk /usr/local/bin/snyk
+          snyk --version
 
       # Step 4: Run Bandit Security Scan
       - name: Run Bandit (Security Scan)
@@ -38,13 +39,12 @@ jobs:
           export PYTHONPATH=$PWD
           bandit -r app/ -ll
 
-      # Step 5: Scan Dependencies with Snyk (No Docker)
+      # Step 5: Scan Dependencies with Snyk CLI
       - name: Scan Dependencies with Snyk
         run: |
           source env/bin/activate
           export PYTHONPATH=$PWD
           snyk auth ${{ secrets.SNYK_TOKEN }}
-          # Run Snyk test and generate SARIF output for GitHub Security tab
           snyk test --file=requirements.txt --severity-threshold=medium --sarif-file-output=snyk-report.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -60,9 +60,9 @@ jobs:
         run: |
           source env/bin/activate
           export PYTHONPATH=$PWD
-          dep-scan --file requirements.txt --report_file dep-scan-report.json --report_format json
+          depscan --file requirements.txt --report_file dep-scan-report.json --report_format json
           # Optional: also generate SARIF report for GitHub Security tab
-          dep-scan --file requirements.txt --report_file dep-scan-report.sarif --report_format sarif
+          depscan --file requirements.txt --report_file dep-scan-report.sarif --report_format sarif
 
       # Step 8: Upload OWASP dep-scan results to GitHub Security tab
       - name: Upload OWASP dep-scan results to GitHub Code Scanning
