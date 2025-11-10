@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-test-scan:
-    runs-on: linux-label   # Replace with your self-hosted runner label
+    runs-on: linux-label   # Use your self-hosted runner label or 'ubuntu-latest'
 
     steps:
       # Step 1: Checkout the code
@@ -22,7 +22,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           # Install tools for testing & scanning
-          pip install pytest bandit owasp-dep-scan
+          pip install pytest bandit owasp-dep-scan snyk
 
       # Step 3: Run Tests (optional)
 #      - name: Run Tests
@@ -38,16 +38,24 @@ jobs:
           export PYTHONPATH=$PWD
           bandit -r app/ -ll
 
-      # Step 5: Scan Dependencies with Snyk (replacing Safety)
+      # Step 5: Scan Dependencies with Snyk (No Docker)
       - name: Scan Dependencies with Snyk
-        uses: snyk/actions/python@master
+        run: |
+          source env/bin/activate
+          export PYTHONPATH=$PWD
+          snyk auth ${{ secrets.SNYK_TOKEN }}
+          # Run Snyk test and generate SARIF output for GitHub Security tab
+          snyk test --file=requirements.txt --severity-threshold=medium --sarif-file-output=snyk-report.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test  # You can also use 'monitor' to continuously track issues
-          args: --file=requirements.txt --severity-threshold=medium
 
-      # Step 6: OWASP dep-scan - Dependency Vulnerability Scan
+      # Step 6: Upload Snyk SARIF results to GitHub Security tab
+      - name: Upload Snyk Results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-report.sarif
+
+      # Step 7: OWASP dep-scan - Dependency Vulnerability Scan
       - name: Run OWASP dep-scan
         run: |
           source env/bin/activate
@@ -56,7 +64,7 @@ jobs:
           # Optional: also generate SARIF report for GitHub Security tab
           dep-scan --file requirements.txt --report_file dep-scan-report.sarif --report_format sarif
 
-      # Step 7: Upload OWASP dep-scan results to GitHub Security tab
+      # Step 8: Upload OWASP dep-scan results to GitHub Security tab
       - name: Upload OWASP dep-scan results to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
