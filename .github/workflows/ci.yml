@@ -22,9 +22,9 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           # Install tools for testing & scanning
-          pip install pytest bandit safety owasp-dep-scan
+          pip install pytest bandit owasp-dep-scan
 
-      # Step 3: Run Tests
+      # Step 3: Run Tests (optional)
 #      - name: Run Tests
 #        run: |
 #          source env/bin/activate
@@ -38,12 +38,14 @@ jobs:
           export PYTHONPATH=$PWD
           bandit -r app/ -ll
 
-      # Step 5: Scan dependencies with Safety
-      - name: Scan Dependencies with Safety
-        run: |
-          source env/bin/activate
-          export PYTHONPATH=$PWD
-          safety check --full-report
+      # Step 5: Scan Dependencies with Snyk (replacing Safety)
+      - name: Scan Dependencies with Snyk
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          command: test  # You can also use 'monitor' to continuously track issues
+          args: --file=requirements.txt --severity-threshold=medium
 
       # Step 6: OWASP dep-scan - Dependency Vulnerability Scan
       - name: Run OWASP dep-scan
@@ -54,7 +56,7 @@ jobs:
           # Optional: also generate SARIF report for GitHub Security tab
           dep-scan --file requirements.txt --report_file dep-scan-report.sarif --report_format sarif
 
-      # Step 7 (optional): Upload SARIF results to GitHub Security tab
+      # Step 7: Upload OWASP dep-scan results to GitHub Security tab
       - name: Upload OWASP dep-scan results to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
